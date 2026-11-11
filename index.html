@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AetherMind - Premium Local Mindmapping</title>
+  <!-- SEO tags -->
+  <meta name="description" content="AetherMind is a premium, free, Coggle-like mindmapping tool that runs completely offline and local. Edit, color-code, and save diagrams directly to your disk.">
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="aethermind.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="aethermind.ico">
+  <link rel="stylesheet" href="style.css?v=1.1.8">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <!-- Viewport for zoom & pan -->
+  <div id="canvas-viewport">
+    <!-- Grid pattern background -->
+    <div id="grid-background"></div>
+    
+    <!-- Infinite canvas container -->
+    <div id="canvas-container">
+      <!-- SVG connections layer -->
+      <svg id="connections-svg">
+        <defs>
+          <!-- Glow filters for branches -->
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+      </svg>
+      
+      <!-- HTML nodes layer -->
+      <div id="nodes-container"></div>
+    </div>
+  </div>
+
+  <!-- Header Bar -->
+  <header class="glass-ui">
+    <div class="logo">
+      <button id="btn-home-toggle" class="btn btn-icon btn-home" title="Go to Dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <line x1="12" y1="12" x2="4.5" y2="5.5" stroke="#b845c4" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="12" y1="12" x2="19.5" y2="5.5" stroke="#4556c4" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="12" y1="12" x2="19.5" y2="18.5" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="12" y1="12" x2="4.5" y2="18.5" stroke="#eab308" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="4.5" cy="5.5" r="2.8" fill="#b845c4"/>
+        <circle cx="19.5" cy="5.5" r="2.8" fill="#4556c4"/>
+        <circle cx="19.5" cy="18.5" r="2.8" fill="#22c55e"/>
+        <circle cx="4.5" cy="18.5" r="2.8" fill="#eab308"/>
+        <circle cx="12" cy="12" r="4.5" fill="#6366f1"/>
+        <circle cx="12" cy="12" r="2" fill="#ffffff"/>
+      </svg>
+      <h1 id="active-diagram-title">AetherMind</h1>
+    </div>
+    <div class="header-actions">
+      <div class="btn-group">
+        <button id="btn-undo" class="btn btn-icon" title="Undo (Ctrl+Z)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        </button>
+        <button id="btn-redo" class="btn btn-icon" title="Redo (Ctrl+Y)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+        </button>
+      </div>
+      <div class="separator"></div>
+      <div class="btn-group">
+        <button id="btn-zoom-out" class="btn btn-icon" title="Zoom Out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <span id="zoom-level">100%</span>
+        <button id="btn-zoom-in" class="btn btn-icon" title="Zoom In">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button id="btn-zoom-reset" class="btn" title="Recenter & Reset Zoom">Center View</button>
+        <button id="btn-layout" class="btn" title="Clean Layout & Auto-Arrange (Alt+L)">Auto-Arrange</button>
+      </div>
+      <div class="separator"></div>
+      <div class="btn-group" style="position: relative;">
+        <button id="btn-header-import" class="btn btn-icon" title="Load Map (.json)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
+        <button id="btn-header-export-trigger" class="btn btn-icon" title="Download / Export Map">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        
+        <!-- Export dropdown menu -->
+        <div id="export-dropdown" class="dropdown-menu glass-ui hide">
+          <button id="btn-export-json-menu" class="dropdown-item">📁 Save JSON Map</button>
+          <button id="btn-export-png-menu" class="dropdown-item">🖼️ Save as PNG Image</button>
+          <button id="btn-export-svg-menu" class="dropdown-item">🎨 Save as SVG Vector</button>
+          <button id="btn-export-pdf-menu" class="dropdown-item">📄 Save as PDF Document</button>
+          <div class="dropdown-divider"></div>
+          <button id="btn-clear-menu" class="dropdown-item danger-item">🧹 Reset Canvas</button>
+        </div>
+      </div>
+      <div class="separator"></div>
+      <button id="btn-theme" class="btn btn-icon" title="Toggle Light/Dark Theme">
+        <!-- Sun icon / Moon icon shown via CSS depending on theme -->
+        <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hidden input for file selection -->
+  <input type="file" id="file-input" accept=".json" style="display: none;">
+
+  <!-- Status indicators pill -->
+  <div class="auto-save-status glass-ui">
+    <span class="status-dot"></span>
+    <span id="status-text">Auto-saved locally</span>
+  </div>
+
+  <!-- Help Trigger Floating Button -->
+  <button id="btn-help-trigger" class="glass-ui btn-icon-round" title="Show Keyboard Shortcuts">?</button>
+
+  <!-- Help Panel / Modal Overlay -->
+  <div id="help-panel" class="glass-ui hide">
+    <div class="help-header">
+      <h3>Keyboard Shortcuts</h3>
+      <button id="btn-help-close" class="btn btn-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="help-content">
+      <div class="shortcut-item">
+        <span class="key">Tab</span>
+        <span class="desc">Add child branch</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Enter</span>
+        <span class="desc">Add sibling branch</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Double-click</span>
+        <span class="desc">Edit branch text</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">F2</span> / <span class="key">Space</span>
+        <span class="desc">Edit selected text</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Delete</span> / <span class="key">Backspace</span>
+        <span class="desc">Remove branch & sub-branches</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Ctrl</span> + <span class="key">Z</span>
+        <span class="desc">Undo last action</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Ctrl</span> + <span class="key">Y</span>
+        <span class="desc">Redo last action</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Alt</span> + <span class="key">L</span>
+        <span class="desc">Auto-Arrange layout</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Drag Background</span>
+        <span class="desc">Pan around canvas</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Mouse Wheel</span>
+        <span class="desc">Zoom in / zoom out</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key">Drag Node</span>
+        <span class="desc">Reposition branch</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toolbar for Selected Node -->
+  <div id="node-toolbar" class="glass-ui hide">
+    <button id="toolbar-add-child" class="btn btn-icon btn-small" title="Add Child (Tab)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="toolbar-separator"></div>
+    <div class="color-picker-wrapper">
+      <button id="toolbar-color" class="btn btn-icon btn-small" title="Change Color">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/><path d="M12 17A5 5 0 1 0 12 7A5 5 0 0 0 12 17Z" fill="currentColor"/></svg>
+      </button>
+      <div id="palette-dropdown" class="glass-ui hide">
+        <div class="color-swatch" style="background-color: #b845c4;" data-color="#b845c4"></div>
+        <div class="color-swatch" style="background-color: #4556c4;" data-color="#4556c4"></div>
+        <div class="color-swatch" style="background-color: #22c55e;" data-color="#22c55e"></div>
+        <div class="color-swatch" style="background-color: #84cc16;" data-color="#84cc16"></div>
+        <div class="color-swatch" style="background-color: #eab308;" data-color="#eab308"></div>
+        <div class="color-swatch" style="background-color: #f97316;" data-color="#f97316"></div>
+        <div class="color-swatch" style="background-color: #14b8a6;" data-color="#14b8a6"></div>
+        <div class="color-swatch" style="background-color: #ec4899;" data-color="#ec4899"></div>
+      </div>
+    </div>
+    <div class="toolbar-separator"></div>
+    <button id="toolbar-delete" class="btn btn-icon btn-small btn-danger" title="Delete Branch (Del)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    </button>
+  </div>
+
+  <!-- Dashboard View (Coggle folders dashboard style) -->
+  <div id="dashboard-view" class="hide">
+    <aside id="dashboard-sidebar">
+      <div class="dashboard-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <line x1="12" y1="12" x2="4.5" y2="5.5" stroke="#b845c4" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="12" y1="12" x2="19.5" y2="5.5" stroke="#4556c4" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="12" y1="12" x2="19.5" y2="18.5" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="12" y1="12" x2="4.5" y2="18.5" stroke="#eab308" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="4.5" cy="5.5" r="2.8" fill="#b845c4"/>
+          <circle cx="19.5" cy="5.5" r="2.8" fill="#4556c4"/>
+          <circle cx="19.5" cy="18.5" r="2.8" fill="#22c55e"/>
+          <circle cx="4.5" cy="18.5" r="2.8" fill="#eab308"/>
+          <circle cx="12" cy="12" r="4.5" fill="#6366f1"/>
+          <circle cx="12" cy="12" r="2" fill="#ffffff"/>
+        </svg>
+        <span>AetherMind</span>
+      </div>
+      <div id="folders-list">
+        <!-- Folders generated dynamically in app.js -->
+      </div>
+      <button id="btn-add-folder" class="btn btn-block btn-small btn-add-folder">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Folder
+      </button>
+    </aside>
+    
+    <main id="dashboard-content">
+      <div class="dashboard-header">
+        <div class="search-box-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Search diagrams...">
+        </div>
+        <div class="dashboard-header-actions">
+          <button id="btn-dashboard-import" class="btn" title="Load diagram file to dashboard">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import Diagram
+          </button>
+          <input type="file" id="dashboard-file-input" accept=".json" style="display: none;">
+        </div>
+      </div>
+      
+      <div class="active-folder-title-bar">
+        <h2 id="current-folder-title">All Diagrams</h2>
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-sample-diagram" class="btn" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; font-weight: 600;">
+            ✨ Sample (EN)
+          </button>
+          <button id="btn-sample-zh-diagram" class="btn" style="background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.4); color: #f472b6; font-weight: 600;">
+            🇨🇳 示例展示 (中文)
+          </button>
+          <button id="btn-create-diagram" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Mindmap
+          </button>
+        </div>
+      </div>
+      
+      <div id="diagrams-grid">
+        <!-- Mindmap cards generated dynamically in app.js -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Dialog: Create Folder -->
+  <div id="modal-folder" class="modal-overlay hide">
+    <div class="modal-content glass-ui">
+      <h3>New Folder</h3>
+      <input type="text" id="input-folder-name" placeholder="Enter folder name...">
+      <div class="modal-actions">
+        <button id="btn-folder-cancel" class="btn">Cancel</button>
+        <button id="btn-folder-submit" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog: Rename Diagram -->
+  <div id="modal-rename" class="modal-overlay hide">
+    <div class="modal-content glass-ui">
+      <h3>Rename Diagram</h3>
+      <input type="text" id="input-rename-title" placeholder="Enter new title...">
+      <div class="modal-actions">
+        <button id="btn-rename-cancel" class="btn">Cancel</button>
+        <button id="btn-rename-submit" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog: Move Diagram to Folder -->
+  <div id="modal-move" class="modal-overlay hide">
+    <div class="modal-content glass-ui">
+      <h3>Move Diagram to Folder</h3>
+      <select id="select-move-folder">
+        <!-- Folders list rendered here -->
+      </select>
+      <div class="modal-actions">
+        <button id="btn-move-cancel" class="btn">Cancel</button>
+        <button id="btn-move-submit" class="btn btn-primary">Move</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=1.1.8"></script>
+</body>
+</html>
